@@ -3,7 +3,7 @@ pipeline {
     environment {
         AWS_ACCESS_KEY_ID = credentials('AWS_ACCESS_KEY_ID')
         AWS_SECRET_ACCESS_KEY = credentials('AWS_SECRET_ACCESS_KEY')
-        region = "us-east-1"
+        AWS_DEFAULT_REGION = "us-east-1"
     }
 
     stages {
@@ -46,12 +46,28 @@ pipeline {
                 input(message: "Are you sure to proceed?", ok: "Proceed")
             }
         }
-        // stage('Apply/Destroy EKS cluster'){
-        //     steps{
-        //         dir('EKS'){
-        //             sh 'terraform $action --auto-approve'
-        //         }
-        //     }
-        // }
+        stage('Apply/Destroy EKS cluster'){
+            steps{
+                dir('EKS'){
+                    sh 'terraform $action --auto-approve'
+                }
+            }
+        }
+        stage('deploying nginx app'){
+            steps{
+                dir('EKS/configuration_files'){
+                    sh 'aws eks update-kubeconfig --name my-eks-cluser'
+                }
+            }
+        }
+        stage('deploying nginx app'){
+            steps{
+                dir('EKS/configuration_files'){
+                    sh 'aws eks update-kubeconfig --name my-eks-cluser'
+                    sh 'kubectl apply -f deployment.yml'
+                    sh 'kubectl apply -f service.yml'
+                }
+            }
+        }
     }
 }
