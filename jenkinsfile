@@ -1,0 +1,57 @@
+pipeline {
+    agent any
+    environment {
+        AWS_ACCESS_KEY_ID = credentials('AWS_ACCESS_KEY_ID')
+        AWS_SECRET_ACCESS_KEY = credentials('AWS_SECRET_ACCESS_KEY')
+        region = "us-east-1"
+    }
+
+    stages {
+        stage('code checkout') {
+            steps {
+                script{
+                echo '**************** code is started for checking out ************************'
+                checkout scmGit(branches: [[name: '*/master']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/ersanjaysah/terraform_with_jenkins.git']])
+                }
+            }
+        }
+        stage('initilizing terraform'){
+            steps{
+                script{
+                    dir('EKS'){
+                        sh 'terraform init'
+                    }
+                }
+            }
+        }
+        stage('fromating the code'){
+            steps{
+                dir('EKS'){
+                    sh 'terraform fmt'
+                }
+            }
+        }
+        stage('validating code'){
+            steps{
+                dir('EKS'){
+                    sh 'terraform validate'
+                }
+            }
+        }
+        stage('planning'){
+            steps{
+                dir('EKS'){
+                    sh 'terraform plan'
+                }
+                input(message: "Are you sure to proceed?", ok: "Proceed")
+            }
+        }
+        stage('Apply/Destroy EKS cluster'){
+            steps{
+                dir('EKS'){
+                    sh 'terraform $action --auto-approve'
+                }
+            }
+        }
+    }
+}
