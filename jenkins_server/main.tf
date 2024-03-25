@@ -65,7 +65,7 @@ module "ec2_instance" {
   source = "terraform-aws-modules/ec2-instance/aws"
 
   name = "jenkins-instance"
-
+  ami = data.aws_ami.ubuntu.id
   instance_type               = var.instance_type
   key_name                    = "jenkinskey"
   monitoring                  = true
